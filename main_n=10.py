@@ -11,6 +11,19 @@ num_epoch = 500
 batch = 10
 num_hidden = 50
 
+m = data.X_train.mean(axis=0)
+v = data.X_train.var(axis=0)
+for i in range(n):
+    data.X_train[:,i] = (data.X_train[:,i] - m[i])/v[i]
+
+m = data.X_test.mean(axis=0)
+v = data.X_test.var(axis=0)
+for i in range(n):
+    data.X_test[:,i] = (data.X_test[:,i] - m[i])/v[i]
+
+
+
+
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
@@ -92,7 +105,7 @@ with tf.Session() as sess:
             sess.run(opt, feed_dict={X:data_batch,y_:label_batch})
         l = sess.run(loss, feed_dict={X:X_test,y_:data.y_test})
         print l,
-        if abs(last_l - l) < 1e-4:
+        if abs(last_l - l) < 1e-8:
             break
         last_l = l
     print

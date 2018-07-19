@@ -7,6 +7,7 @@ class Data:
         self.X_train, self.y_train = self.getData(num_train, n)
         self.X_test, self.y_test = self.getData(num_test, n)
         
+        
     def getA(self,n):
         k = [np.exp(-5),np.exp(5)]
         A = [0]*n
@@ -17,15 +18,15 @@ class Data:
                 A[i] = k[1]
         return np.array(A)
 
-    def U(self,q,A):
-        A = np.diag(A)
-        l = np.linalg.norm(q)
+    def U(self,q):
+        A = np.diag(self.A)
+        l = np.abs(q).max()
         if l<=3:
-            return np.sqrt(np.dot(np.dot(q.T,A),q))
+            return np.exp(-np.sqrt(np.dot(np.dot(q.T,A),q)))
         elif l<6:
-            return np.sqrt(np.dot(np.dot(q.T,A),q))
+            return np.exp(-np.sqrt(np.dot(np.dot(q.T,A),q))-1)
         else:
-            return 999999999
+            return 0
 
     # k: number of samples
     def getData(self,k,n):
@@ -36,7 +37,6 @@ class Data:
                 data[i][j] = random.randint(-1000,1000)
         data = data/1000.0
         for i in range(k):
-            label[i][0] = self.U(data[i], self.A)
+            label[i][0] = self.U(data[i])
         return data, label
-    
     

@@ -9,10 +9,30 @@ from mpl_toolkits.mplot3d import Axes3D
 n = 2
 num_train = 10000
 num_test = 2000
-data = Data(num_train, num_test, n)       
+data = Data(num_train, num_test, n)      
+
+fig = plt.figure()
+ax = fig.add_subplot(111,projection='3d')
+x = [data.X_train[i,0] for i in range(num_train)]
+y = [data.X_train[i,1] for i in range(num_train)]
+z = [data.y_train[i,0] for i in range(num_train)]
+ax.scatter(x,y,z,c='b')
+plt.show()
+
+# normalize
+m = data.X_train.mean(axis=0)
+v = data.X_train.var(axis=0)
+# v = np.sqrt(data.X_train.var(axis=0))
+for i in range(n):
+    data.X_train[:,i] = (data.X_train[:,i] - m[i])/v[i]
+m = data.X_test.mean(axis=0)
+v = data.X_test.var(axis=0)
+# v = np.sqrt(data.X_test.var(axis=0))
+for i in range(n):
+    data.X_test[:,i] = (data.X_test[:,i] - m[i])/v[i]
 num_epoch = 500
 batch = 10
-num_hidden = 10
+num_hidden = 1000
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
@@ -27,7 +47,7 @@ def eculidean_distance(x,y):
 
 def C_initialize(num_hidden,n):
     return np.random.rand(num_hidden,n)
-
+'''
 def sigma_initialize(C):
     num_hidden = C.shape[0]
     sigma = np.zeros(num_hidden)
@@ -47,6 +67,16 @@ def generate_input(data,C):
             K[i][j] = np.dot(delta,delta.T)/(2*sigma[j])
     K = np.exp(-K)
     return K
+'''
+
+def generate_input(data,C):
+    K = np.zeros([data.shape[0],C.shape[0]])
+    for i in range(data.shape[0]):
+        for j in range(C.shape[0]):
+            delta = data[i:i+1] - C[j:j+1]
+            K[i][j] = np.dot(delta,delta.T)
+    K = np.exp(-K)
+    return K
 
 C = C_initialize(num_hidden,n)
 X_train = generate_input(data.X_train, C)
@@ -58,6 +88,7 @@ print 'testing data',data.X_test.shape,'testing label',data.y_test.shape
 print
 
 print 'C matrix:'
+print C
 print C.shape
 print
 
@@ -70,6 +101,17 @@ print 'training dataset 0:',X_train[0]
 print 'training dataset 1:',X_train[1]
 print 'training dataset 2:',X_train[2]
 print
+
+print 'training dataset:'
+for i in range(num_train):
+    print np.linalg.norm(data.X_train[i]),
+print
+print 'testing dataset:'
+for i in range(num_test):
+    print np.linalg.norm(data.X_test[i]),
+print
+print
+
 
 X = tf.placeholder(tf.float32,[None,num_hidden])
 y_ = tf.placeholder(tf.float32,[None,1])
@@ -96,7 +138,7 @@ with tf.Session() as sess:
             sess.run(opt, feed_dict={X:data_batch,y_:label_batch})
         l = sess.run(loss, feed_dict={X:X_test,y_:data.y_test})
         print l,
-        if abs(last_l - l) < 1e-4:
+        if abs(last_l - l) < 1e-8:
             break
         last_l = l
     p = sess.run(y, feed_dict={X:X_test, y_:data.y_test})
